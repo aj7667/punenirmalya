@@ -4,11 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Pune Nirmalya Finder</title>
-<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#15803d">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   :root{
@@ -140,15 +142,6 @@
     .fab{ bottom:24px; }
   }
 </style>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-HKLQBG8G1Y"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-HKLQBG8G1Y');
-</script>
 </head>
 <body>
   <header>
@@ -266,6 +259,11 @@
   "use strict";
 
   var lang = "en";
+
+  // ===== Supabase (realtime backend) — paste your two values below, then redeploy =====
+  var SUPA_URL = "https://gkuupqppzhikoighzplz.supabase.co/rest/v1/";   // e.g. "https://abcd1234.supabase.co"
+  var SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdXVwcXBwemhpa29pZ2h6cGx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2ODg3MjksImV4cCI6MjA5NzI2NDcyOX0.l5TThjBExo7Q7G02njbv1pjfB_ogb9Z30ybPUwT9YN4";   // your anon / public key (safe to expose in the browser)
+  var sb = (SUPA_URL && SUPA_KEY && window.supabase) ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
   var STR = {
     en:{
@@ -642,13 +640,27 @@
       accept: document.getElementById('f-accept').value.trim() || (lang==="mr"?"फुलं व पूजा-निर्माल्य":"Floral & puja waste"),
       active:"year", lat: picked.lat, lng: picked.lng, _user:true
     };
-    all.push(rec);
-    saveSuggestions(getSuggestionsOnly().map(function(d){
-      return {name:d.name,area:d.area,type:d.type,accept:d.accept,lat:d.lat,lng:d.lng};
-    }));
-    refresh(); closeModal(); resetForm();
-    map.flyTo([rec.lat,rec.lng], 15, {duration:.7});
-    toast(t('added'));
+    if (sb) {
+      sb.from('locations').insert({
+        name: rec.name, area: rec.area, type: rec.type, accept: rec.accept,
+        active_type: 'year', status: 'community', lat: rec.lat, lng: rec.lng
+      }).select().then(function(res){
+        if (res && res.data && res.data[0]) {
+          rec.id = res.data[0].id;
+          if (!all.some(function(d){ return d.id===rec.id; })) {
+            all.push(rec); refresh(); map.flyTo([rec.lat,rec.lng], 15, {duration:.7});
+          }
+        }
+        toast(t('added'));
+      }).catch(function(){ toast(t('locFail')); });
+    } else {
+      all.push(rec);
+      saveSuggestions(getSuggestionsOnly().map(function(d){
+        return {name:d.name,area:d.area,type:d.type,accept:d.accept,lat:d.lat,lng:d.lng};
+      }));
+      refresh(); map.flyTo([rec.lat,rec.lng], 15, {duration:.7}); toast(t('added'));
+    }
+    closeModal(); resetForm();
   };
 
   // ---------- toast ----------
@@ -659,24 +671,54 @@
   }
 
   // ---------- init ----------
+  function rowToRec(r){
+    return { id:r.id, name:r.name, area:r.area, type:r.type, accept:r.accept,
+             active:r.active_type||'year', months:[7,8], lat:Number(r.lat), lng:Number(r.lng),
+             _user:(r.status!=='verified') };
+  }
+  function subscribeRealtime(){
+    sb.channel('locations-rt')
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'locations' }, function(p){
+        var rec = rowToRec(p.new);
+        if (!all.some(function(d){ return d.id===rec.id; })) { all.push(rec); refresh(); }
+      })
+      .on('postgres_changes', { event:'UPDATE', schema:'public', table:'locations' }, function(p){
+        var rec = rowToRec(p.new);
+        var i = all.findIndex(function(d){ return d.id===rec.id; });
+        if (i>=0) { all[i]=rec; } else { all.push(rec); }
+        refresh();
+      })
+      .on('postgres_changes', { event:'DELETE', schema:'public', table:'locations' }, function(p){
+        all = all.filter(function(d){ return d.id!==p.old.id; });
+        refresh();
+      })
+      .subscribe();
+  }
   function init(){
-    all = SEED.slice();
-    loadSuggestions(function(saved){
-      saved.forEach(function(s){
-        all.push({ name:s.name, area:s.area, type:s.type||"Community", accept:s.accept, active:"year", lat:s.lat, lng:s.lng, _user:true });
+    applyLang();
+    if (sb) {
+      sb.from('locations').select('*').then(function(res){
+        all = (res && res.data && res.data.length) ? res.data.map(rowToRec) : SEED.slice();
+        refresh();
+        subscribeRealtime();
+      }).catch(function(){ all = SEED.slice(); refresh(); });
+    } else {
+      all = SEED.slice();
+      loadSuggestions(function(saved){
+        saved.forEach(function(s){
+          all.push({ name:s.name, area:s.area, type:s.type||"Community", accept:s.accept, active:"year", lat:s.lat, lng:s.lng, _user:true });
+        });
+        refresh();
       });
-      applyLang();
-      refresh();
-    });
+    }
   }
   init();
 })();
 </script>
- <script>
+<script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('sw.js')
-        .catch(function (e) { console.warn('SW registration failed', e); });
+      navigator.serviceWorker.register('sw.js').catch(function (e) { console.warn('SW registration failed', e); });
     });
   }
 </script>
