@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Pune Nirmalya Finder</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#15803d">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -659,6 +662,14 @@
   }
   init();
 })();
+</script>
+ <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js')
+        .catch(function (e) { console.warn('SW registration failed', e); });
+    });
+  }
 </script>
 </body>
 </html>
