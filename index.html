@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pune Nirmalya Finder</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root{
+    --green:#15803d; --green-d:#166534; --green-l:#22c55e;
+    --teal:#0891b2; --amber:#d97706; --purple:#9333ea;
+    --bg:#f4f7f3; --card:#ffffff; --ink:#13311f; --muted:#5d6b62; --line:#e3e9e2;
+  }
+  html,body{ height:100%; }
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans Devanagari",Roboto,sans-serif;
+    background:var(--bg); color:var(--ink); display:flex; flex-direction:column; height:100vh; overflow:hidden;
+  }
+  header{
+    background:linear-gradient(135deg,var(--green) 0%,var(--green-d) 100%);
+    color:#fff; padding:12px 14px 11px; flex-shrink:0; box-shadow:0 2px 10px rgba(20,60,30,.18);
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; min-width:0; }
+  .leaf{ width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.18);border-radius:9px;font-size:17px;flex-shrink:0;}
+  .brand h1{ font-size:17px; font-weight:700; letter-spacing:-.2px; line-height:1.15; }
+  .brand p{ font-size:11px; opacity:.85; margin-top:2px; font-weight:400; line-height:1.2; }
+  .hbtns{ display:flex; align-items:center; gap:7px; flex-shrink:0; }
+  .langtog{ display:flex; background:rgba(255,255,255,.16); border-radius:9px; overflow:hidden; }
+  .langtog button{ border:none; background:transparent; color:#fff; padding:7px 9px; font-size:12px; font-weight:700; cursor:pointer; opacity:.65; }
+  .langtog button.on{ background:#fff; color:var(--green-d); opacity:1; }
+  .about-btn{ width:34px;height:34px;border:none;background:rgba(255,255,255,.16);color:#fff;border-radius:9px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center; }
+  .about-btn:active{ background:rgba(255,255,255,.3); }
+
+  .controls{ background:var(--card); padding:9px 12px; display:flex; gap:8px; align-items:center; border-bottom:1px solid var(--line); flex-shrink:0; flex-wrap:wrap; }
+  .search{ flex:1 1 150px; position:relative; min-width:130px; }
+  .search input{ width:100%; padding:9px 12px 9px 32px; border:1px solid var(--line); border-radius:10px; font-size:14px; background:#fafbfa; outline:none; }
+  .search input:focus{ border-color:var(--green-l); background:#fff; }
+  .search svg{ position:absolute; left:10px; top:50%; transform:translateY(-50%); width:15px; height:15px; stroke:var(--muted); }
+  select{ padding:9px 8px; border:1px solid var(--line); border-radius:10px; font-size:13px; background:#fafbfa; color:var(--ink); outline:none; max-width:130px; }
+  .near-btn{ display:flex; align-items:center; gap:6px; background:var(--green); color:#fff; border:none; padding:9px 12px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .near-btn:active{ background:var(--green-d); }
+  .near-btn svg{ width:15px; height:15px; stroke:#fff; }
+  .chip{ display:flex; align-items:center; gap:7px; background:#fafbfa; border:1px solid var(--line); color:var(--muted); padding:9px 12px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .chip .d{ width:8px; height:8px; border-radius:50%; background:#9aa6a0; }
+  .chip.on{ background:#e7f6ea; border-color:var(--green-l); color:var(--green-d); }
+  .chip.on .d{ background:#22c55e; }
+
+  .main{ flex:1; display:flex; flex-direction:column; min-height:0; }
+  #map{ width:100%; height:46%; min-height:190px; flex-shrink:0; z-index:1; }
+  .panel{ flex:1; background:var(--bg); overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .panel-head{ padding:10px 14px 6px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:var(--bg); z-index:2; }
+  .panel-head h2{ font-size:13px; font-weight:700; color:var(--ink); }
+  .panel-head .cnt{ font-size:12px; color:var(--muted); }
+
+  .card{ background:var(--card); margin:7px 12px; border-radius:13px; padding:12px 13px; box-shadow:0 1px 4px rgba(20,60,30,.06); border:1px solid var(--line); cursor:pointer; transition:transform .08s; }
+  .card:active{ transform:scale(.99); }
+  .card .top{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .card .nm{ font-size:15px; font-weight:700; line-height:1.25; }
+  .card .area{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .badge{ font-size:10px; font-weight:700; padding:3px 8px; border-radius:20px; color:#fff; white-space:nowrap; flex-shrink:0; }
+  .meta{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .tag{ font-size:11px; color:var(--muted); background:#f0f4ef; padding:3px 8px; border-radius:7px; }
+  .trust{ display:inline-flex; align-items:center; font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:7px; }
+  .trust.ver{ background:#e7f6ea; color:#15803d; }
+  .trust.com{ background:#f4e9fb; color:#9333ea; }
+  .status{ display:flex; align-items:center; font-size:11.5px; font-weight:700; margin-top:8px; }
+  .status.on{ color:#15803d; } .status.off{ color:#8a948c; }
+  .dist{ font-size:12px; font-weight:700; color:var(--green); margin-top:6px; display:none; }
+  .dist.show{ display:block; }
+  .dot{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; flex-shrink:0; }
+  .dot.on{ background:#22c55e; animation:pulse 1.8s infinite; }
+  .dot.off{ background:#9aa6a0; }
+  @keyframes pulse{ 0%{ box-shadow:0 0 0 0 rgba(34,197,94,.5) } 70%{ box-shadow:0 0 0 6px rgba(34,197,94,0) } 100%{ box-shadow:0 0 0 0 rgba(34,197,94,0) } }
+
+  .pin{ display:flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:2.5px solid #fff; box-shadow:0 2px 5px rgba(0,0,0,.35); position:relative; }
+  .pin span{ transform:rotate(45deg); font-size:12px; }
+  .pin.inactive{ opacity:.55; }
+  .pin .live{ position:absolute; top:-4px; right:-4px; width:9px; height:9px; background:#22c55e; border:2px solid #fff; border-radius:50%; transform:rotate(45deg); }
+  .userpin{ width:18px;height:18px;background:#2563eb;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 6px rgba(37,99,235,.25);}
+
+  .leaflet-popup-content-wrapper{ border-radius:12px; }
+  .leaflet-popup-content{ margin:12px 14px; font-family:inherit; }
+  .pop h3{ font-size:15px; margin-bottom:3px; color:var(--ink); }
+  .pop .pstat{ font-size:12px; font-weight:700; margin-bottom:7px; display:flex; align-items:center; }
+  .pop .pstat.on{ color:#15803d; } .pop .pstat.off{ color:#8a948c; }
+  .pop .pa{ font-size:12px; color:var(--muted); margin-bottom:8px; }
+  .pop .pl{ font-size:12px; margin:3px 0; color:var(--ink); }
+  .pop .pl b{ color:var(--muted); font-weight:600; }
+  .pop .dirbtn{ display:block; text-align:center; margin-top:10px; background:var(--green); color:#fff; padding:8px; border-radius:9px; text-decoration:none; font-size:13px; font-weight:700; }
+
+  .fab{ position:absolute; right:16px; bottom:18px; background:var(--green); color:#fff; border:none; height:48px; padding:0 18px; border-radius:26px; font-size:14px; font-weight:700; box-shadow:0 4px 14px rgba(20,80,40,.35); cursor:pointer; display:flex; align-items:center; gap:7px; z-index:600; }
+  .fab:active{ background:var(--green-d); }
+  .fab svg{ width:18px; height:18px; stroke:#fff; }
+
+  .overlay{ position:fixed; inset:0; background:rgba(15,30,20,.5); z-index:1000; display:none; align-items:flex-end; justify-content:center; }
+  .overlay.show{ display:flex; }
+  .sheet{ background:#fff; width:100%; max-width:480px; border-radius:18px 18px 0 0; padding:18px 18px 22px; max-height:88vh; overflow-y:auto; animation:up .25s ease; }
+  @keyframes up{ from{ transform:translateY(40px); opacity:.4 } to{ transform:translateY(0); opacity:1 } }
+  .sheet h2{ font-size:17px; margin-bottom:3px; }
+  .sheet .sub{ font-size:12px; color:var(--muted); margin-bottom:14px; line-height:1.4; }
+  .field{ margin-bottom:12px; }
+  .field label{ display:block; font-size:12px; font-weight:600; margin-bottom:5px; color:var(--ink); }
+  .field input, .field select, .field textarea{ width:100%; padding:10px 11px; border:1px solid var(--line); border-radius:10px; font-size:14px; font-family:inherit; outline:none; background:#fafbfa; }
+  .field input:focus,.field select:focus,.field textarea:focus{ border-color:var(--green-l); background:#fff; }
+  .loc-row{ display:flex; gap:8px; }
+  .loc-row button{ flex:1; padding:10px; border:1px solid var(--green); background:#f0f7f1; color:var(--green-d); border-radius:10px; font-size:12.5px; font-weight:600; cursor:pointer; }
+  .loc-row button:active{ background:#e2efe4; }
+  .coord-note{ font-size:11.5px; margin-top:7px; padding:7px 10px; border-radius:8px; background:#f0f4ef; color:var(--muted); }
+  .coord-note.set{ background:#e7f6ea; color:var(--green-d); font-weight:600; }
+  .actions{ display:flex; gap:10px; margin-top:6px; }
+  .actions .cancel{ flex:1; padding:12px; border:1px solid var(--line); background:#fff; color:var(--muted); border-radius:11px; font-size:14px; font-weight:600; cursor:pointer; }
+  .actions .save{ flex:2; padding:12px; border:none; background:var(--green); color:#fff; border-radius:11px; font-size:14px; font-weight:700; cursor:pointer; }
+  .actions .save:disabled{ background:#bcccc0; cursor:not-allowed; }
+
+  .ab-p{ font-size:13.5px; line-height:1.55; color:var(--ink); margin-bottom:11px; }
+  .legend{ background:#f6faf5; border:1px solid var(--line); border-radius:12px; padding:12px 13px; margin:6px 0 14px; }
+  .legend h3{ font-size:13px; margin-bottom:9px; }
+  .leg-row{ display:flex; align-items:center; gap:9px; font-size:12.5px; margin:6px 0; color:var(--ink); }
+  .leg-dot{ width:16px; height:16px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.25); flex-shrink:0; }
+  .leg-live{ width:12px;height:12px;border-radius:50%;background:#22c55e;flex-shrink:0;}
+  .ab-close{ width:100%; padding:12px; border:none; background:var(--green); color:#fff; border-radius:11px; font-size:14px; font-weight:700; cursor:pointer; margin-top:4px; }
+
+  .pickbar{ position:fixed; top:0; left:0; right:0; background:var(--green-d); color:#fff; padding:12px 16px; z-index:1200; display:none; align-items:center; justify-content:space-between; font-size:13px; font-weight:600; box-shadow:0 2px 8px rgba(0,0,0,.25); gap:10px; }
+  .pickbar.show{ display:flex; }
+  .pickbar button{ background:rgba(255,255,255,.2); border:none; color:#fff; padding:6px 12px; border-radius:8px; font-weight:600; cursor:pointer; white-space:nowrap; }
+
+  .toast{ position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; padding:11px 18px; border-radius:24px; font-size:13px; font-weight:600; z-index:1500; opacity:0; transition:opacity .25s; pointer-events:none; max-width:90%; text-align:center; }
+  .toast.show{ opacity:1; }
+
+  @media(min-width:780px){
+    .main{ flex-direction:row; }
+    #map{ width:62%; height:100%; }
+    .panel{ width:38%; border-left:1px solid var(--line); }
+    .fab{ bottom:24px; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="leaf">🌸</div>
+      <div>
+        <h1 id="h-title">Pune Nirmalya Finder</h1>
+        <p id="h-tagline">Dispose floral &amp; puja waste responsibly — keep our rivers clean</p>
+      </div>
+    </div>
+    <div class="hbtns">
+      <div class="langtog">
+        <button data-l="en" class="on">EN</button>
+        <button data-l="mr">मराठी</button>
+      </div>
+      <button class="about-btn" id="aboutBtn">ℹ</button>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="search" type="text" placeholder="Search area or place…">
+    </div>
+    <select id="filter">
+      <option value="all">All types</option>
+      <option value="PMC Nirmalya Kalash">PMC Kalash</option>
+      <option value="SWaCH Collection Point">SWaCH Point</option>
+      <option value="Ward Office Composting">Ward Office</option>
+      <option value="Community">Community</option>
+    </select>
+    <button class="chip" id="activeChip"><span class="d"></span><span id="activeTxt">Active now</span></button>
+    <button class="near-btn" id="nearBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
+      <span id="nearTxt">Near me</span>
+    </button>
+  </div>
+
+  <div class="main">
+    <div id="map"></div>
+    <div class="panel">
+      <div class="panel-head">
+        <h2 id="panelTitle">Collection points</h2>
+        <span class="cnt" id="count"></span>
+      </div>
+      <div id="list"></div>
+      <div style="height:80px"></div>
+    </div>
+  </div>
+
+  <button class="fab" id="suggestBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+    <span id="suggestTxt">Suggest</span>
+  </button>
+
+  <!-- Suggest modal -->
+  <div class="overlay" id="overlay">
+    <div class="sheet">
+      <h2 id="sgTitle">Suggest a location</h2>
+      <p class="sub" id="sgSub">Know a Nirmalya pot we're missing? Add it to help others.</p>
+      <div class="field">
+        <label id="l-name">Name of place *</label>
+        <input id="f-name" type="text" placeholder="e.g. Vithoba Ghat, Parvati">
+      </div>
+      <div class="field">
+        <label id="l-area">Area / locality *</label>
+        <input id="f-area" type="text" placeholder="e.g. Parvati, Pune">
+      </div>
+      <div class="field">
+        <label id="l-type">Type</label>
+        <select id="f-type">
+          <option value="PMC Nirmalya Kalash">PMC Nirmalya Kalash</option>
+          <option value="SWaCH Collection Point">SWaCH Collection Point</option>
+          <option value="Ward Office Composting">Ward Office Composting</option>
+          <option value="Community" selected>Community-reported</option>
+        </select>
+      </div>
+      <div class="field">
+        <label id="l-accept">What's accepted</label>
+        <input id="f-accept" type="text" placeholder="e.g. Flowers, garlands, durva">
+      </div>
+      <div class="field">
+        <label id="l-loc">Location *</label>
+        <div class="loc-row">
+          <button id="useLoc" type="button">📍 Use my location</button>
+          <button id="pickLoc" type="button">🗺️ Pick on map</button>
+        </div>
+        <div class="coord-note" id="coordNote">No location set yet.</div>
+      </div>
+      <div class="actions">
+        <button class="cancel" id="cancelBtn">Cancel</button>
+        <button class="save" id="saveBtn" disabled>Add location</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- About modal -->
+  <div class="overlay" id="aboutOverlay">
+    <div class="sheet">
+      <h2 id="ab-title">About this app</h2>
+      <div id="ab-body"></div>
+      <button class="ab-close" id="abClose">Close</button>
+    </div>
+  </div>
+
+  <div class="pickbar" id="pickbar">
+    <span id="pickInstr">👆 Tap anywhere on the map to set the location</span>
+    <button id="pickCancel">Cancel</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var lang = "en";
+
+  var STR = {
+    en:{
+      title:"Pune Nirmalya Finder",
+      tagline:"Dispose floral & puja waste responsibly — keep our rivers clean",
+      search:"Search area or place…",
+      allTypes:"All types", fPMC:"PMC Kalash", fSWaCH:"SWaCH Point", fWard:"Ward Office", fComm:"Community",
+      near:"Near me", points:"Collection points", pt1:"point", ptN:"points",
+      activeOnly:"Active now", getDir:"Get directions →",
+      activeNow:"Active now", notActive:"Seasonal — busy in festival season",
+      yearRound:"Open year-round", festival:"Active during Ganesh festival (Aug–Sep)",
+      distAway:"km away", youHere:"You are here",
+      suggest:"Suggest", sgTitle:"Suggest a location",
+      sgSub:"Know a Nirmalya pot we're missing? Add it to help others.",
+      nameL:"Name of place *", nameP:"e.g. Vithoba Ghat, Parvati",
+      areaL:"Area / locality *", areaP:"e.g. Parvati, Pune",
+      typeL:"Type", acceptL:"What's accepted", acceptP:"e.g. Flowers, garlands, durva",
+      locL:"Location *", useLoc:"📍 Use my location", pickLoc:"🗺️ Pick on map",
+      noLoc:"No location set yet.", coordSet:"✓ Location set:", cancel:"Cancel", add:"Add location",
+      tPMC:"PMC Nirmalya Kalash", tSWaCH:"SWaCH Collection Point", tWard:"Ward Office Composting", tComm:"Community-reported",
+      lType:"Type", lAccepts:"Accepts", lDist:"Distance",
+      verified:"✓ Verified", commTag:"Community-reported",
+      locating:"Locating you…", nearShown:"Showing points nearest to you",
+      locFail:"Couldn't get your location — check permissions", noSupport:"Location not supported on this device",
+      gettingLoc:"Getting your location…", locCaptured:"Location captured",
+      tapMap:"Tap the map to place your pin", added:"Thanks! Location added 🌸",
+      noMatch:"No points match your search.", pickInstr:"👆 Tap anywhere on the map to set the location",
+      aboutTitle:"About this app", close:"Close", legendTitle:"Map legend",
+      legActive:"Green dot = active / open now",
+      about:[
+        "Every day across Pune, flowers, garlands and other puja offerings (nirmalya) are given. Too often this floral waste ends up in the Mula and Mutha rivers, polluting our water.",
+        "This app helps you find the nearest Nirmalya Kalash and collection points, so you can dispose of floral and puja waste the eco-friendly way — where it is composted and returned to nature.",
+        "Pujas happen all year round, not only during festivals. Ward offices and many temples accept floral waste year-round, while ghat-side points are busiest during Ganesh Chaturthi.",
+        "The locations shown are sample / representative points. Help us improve by adding pots near you using the Suggest button."
+      ]
+    },
+    mr:{
+      title:"पुणे निर्माल्य फाइंडर",
+      tagline:"फुलं व पूजेचा निर्माल्य जबाबदारीने टाका — नद्या स्वच्छ ठेवा",
+      search:"परिसर किंवा ठिकाण शोधा…",
+      allTypes:"सर्व प्रकार", fPMC:"पीएमसी कलश", fSWaCH:"स्वच्छ केंद्र", fWard:"प्रभाग कार्यालय", fComm:"नागरिक",
+      near:"जवळचे", points:"संकलन केंद्रे", pt1:"केंद्र", ptN:"केंद्रे",
+      activeOnly:"सध्या सुरू", getDir:"दिशा मिळवा →",
+      activeNow:"सध्या सुरू", notActive:"हंगामी — सणांच्या काळात गर्दी",
+      yearRound:"वर्षभर सुरू", festival:"गणेशोत्सवात सुरू (ऑग–सप्टें)",
+      distAway:"किमी दूर", youHere:"तुम्ही येथे आहात",
+      suggest:"सुचवा", sgTitle:"ठिकाण सुचवा",
+      sgSub:"आम्ही चुकवलेलं निर्माल्य केंद्र माहिती आहे का? इतरांना मदत करण्यासाठी जोडा.",
+      nameL:"ठिकाणाचे नाव *", nameP:"उदा. विठोबा घाट, पर्वती",
+      areaL:"परिसर / भाग *", areaP:"उदा. पर्वती, पुणे",
+      typeL:"प्रकार", acceptL:"काय स्वीकारले जाते", acceptP:"उदा. फुलं, हार, दुर्वा",
+      locL:"स्थान *", useLoc:"📍 माझे स्थान वापरा", pickLoc:"🗺️ नकाशावर निवडा",
+      noLoc:"अद्याप स्थान निश्चित केलेले नाही.", coordSet:"✓ स्थान निश्चित:", cancel:"रद्द करा", add:"ठिकाण जोडा",
+      tPMC:"पीएमसी निर्माल्य कलश", tSWaCH:"स्वच्छ संकलन केंद्र", tWard:"प्रभाग कार्यालय कंपोस्टिंग", tComm:"नागरिक-सूचित",
+      lType:"प्रकार", lAccepts:"स्वीकारले", lDist:"अंतर",
+      verified:"✓ पडताळलेले", commTag:"नागरिक-सूचित",
+      locating:"तुमचं स्थान शोधत आहे…", nearShown:"तुमच्या जवळची केंद्रे दाखवत आहे",
+      locFail:"स्थान मिळालं नाही — परवानगी तपासा", noSupport:"या उपकरणावर स्थान समर्थित नाही",
+      gettingLoc:"तुमचं स्थान घेत आहे…", locCaptured:"स्थान घेतलं",
+      tapMap:"पिन ठेवण्यासाठी नकाशावर टॅप करा", added:"धन्यवाद! ठिकाण जोडलं 🌸",
+      noMatch:"तुमच्या शोधाशी जुळणारी केंद्रे नाहीत.", pickInstr:"👆 स्थान निश्चित करण्यासाठी नकाशावर कुठेही टॅप करा",
+      aboutTitle:"अॅपबद्दल", close:"बंद करा", legendTitle:"नकाशा सूची",
+      legActive:"हिरवा ठिपका = सध्या सुरू",
+      about:[
+        "पुण्यात दररोज फुलं, हार आणि इतर पूजेची निर्माल्य अर्पण केली जाते. हा निर्माल्य अनेकदा मुळा-मुठा नद्यांमध्ये टाकला जातो आणि पाणी प्रदूषित होतं.",
+        "हे अॅप तुम्हाला जवळची निर्माल्य कलश व संकलन केंद्रे शोधण्यात मदत करतं, जेणेकरून तुम्ही फुलांचा व पूजेचा निर्माल्य पर्यावरणपूरक पद्धतीने टाकू शकता — जिथे त्याचं कंपोस्ट होऊन ते निसर्गाला परत मिळतं.",
+        "पूजा वर्षभर होतात, फक्त सणांमध्ये नाही. प्रभाग कार्यालये आणि अनेक मंदिरे वर्षभर निर्माल्य स्वीकारतात, तर घाटांवरील केंद्रे गणेशोत्सवात सर्वाधिक सक्रिय असतात.",
+        "दाखवलेली ठिकाणे नमुना / प्रातिनिधिक आहेत. 'सुचवा' बटण वापरून तुमच्या जवळची केंद्रे जोडून आम्हाला मदत करा."
+      ]
+    }
+  };
+  function t(k){ return STR[lang][k]; }
+
+  var TYPES = {
+    "PMC Nirmalya Kalash":"#15803d",
+    "SWaCH Collection Point":"#0891b2",
+    "Ward Office Composting":"#d97706",
+    "Community":"#9333ea"
+  };
+
+  var ACCEPT_MR = {
+    "flowers":"फुलं","garlands":"हार","durva":"दुर्वा","prasad leaves":"प्रसादाची पानं",
+    "coconuts":"नारळ","leaves":"पानं","floral waste":"फुलांचा निर्माल्य",
+    "temple floral offerings":"मंदिरातील फुलं","prasad":"प्रसाद",
+    "floral & organic puja waste":"फुलं व सेंद्रिय पूजा-निर्माल्य",
+    "floral & organic waste":"फुलं व सेंद्रिय निर्माल्य"
+  };
+
+  // active:'year' = open year-round; 'festival' = busiest Aug-Sep (months 7,8)
+  var SEED = [
+    { name:"Sangam Ghat", area:"Sangamwadi (Mula-Mutha confluence)", type:"PMC Nirmalya Kalash", accept:"Flowers, garlands, durva, prasad leaves", active:"festival", months:[7,8], lat:18.5293, lng:73.8559 },
+    { name:"Omkareshwar Temple Ghat", area:"Shaniwar Peth", type:"SWaCH Collection Point", accept:"Flowers, garlands, coconuts", active:"festival", months:[7,8], lat:18.5168, lng:73.8527 },
+    { name:"Z Bridge Ghat", area:"Deccan Gymkhana", type:"PMC Nirmalya Kalash", accept:"Flowers, garlands, durva", active:"festival", months:[7,8], lat:18.5172, lng:73.8404 },
+    { name:"Bund Garden Ghat", area:"Sangam Bridge, Yerawada side", type:"PMC Nirmalya Kalash", accept:"Floral waste, garlands", active:"festival", months:[7,8], lat:18.5342, lng:73.8772 },
+    { name:"Vitthalwadi Ghat", area:"Sinhagad Road", type:"SWaCH Collection Point", accept:"Flowers, leaves, durva", active:"festival", months:[7,8], lat:18.4849, lng:73.8281 },
+    { name:"Mhatre Bridge Ghat", area:"Erandwane", type:"PMC Nirmalya Kalash", accept:"Floral waste", active:"festival", months:[7,8], lat:18.5046, lng:73.8331 },
+    { name:"Dattawadi Ghat", area:"Rajaram Bridge", type:"SWaCH Collection Point", accept:"Flowers, garlands", active:"festival", months:[7,8], lat:18.4969, lng:73.8404 },
+    { name:"Kasba Ganpati Mandir", area:"Kasba Peth", type:"PMC Nirmalya Kalash", accept:"Temple floral offerings", active:"year", lat:18.5189, lng:73.8566 },
+    { name:"Saras Baug Point", area:"Swargate", type:"PMC Nirmalya Kalash", accept:"Flowers, garlands, prasad", active:"festival", months:[7,8], lat:18.5018, lng:73.8542 },
+    { name:"Kothrud Ward Office", area:"Kothrud", type:"Ward Office Composting", accept:"Floral & organic puja waste", active:"year", lat:18.5074, lng:73.8077 },
+    { name:"Aundh Ward Office", area:"Aundh", type:"Ward Office Composting", accept:"Floral & organic puja waste", active:"year", lat:18.5590, lng:73.8076 },
+    { name:"Hadapsar Ward Office", area:"Hadapsar", type:"Ward Office Composting", accept:"Floral & organic waste", active:"year", lat:18.5089, lng:73.9259 },
+    { name:"Warje Ghat", area:"Warje (Mutha River)", type:"SWaCH Collection Point", accept:"Flowers, garlands, durva", active:"festival", months:[7,8], lat:18.4815, lng:73.8009 },
+    { name:"Yerawada Ghat", area:"Yerawada", type:"PMC Nirmalya Kalash", accept:"Floral waste", active:"festival", months:[7,8], lat:18.5524, lng:73.9010 }
+  ];
+
+  var all = [];
+  var markers = [];
+  var userPos = null;
+  var userMarker = null;
+  var pickMode = false;
+  var picked = null;
+  var activeOnly = false;
+
+  // ---------- storage ----------
+  var SKEY = "nirmalya:suggestions";
+  function loadSuggestions(cb){
+    try{
+      window.storage.get(SKEY).then(function(r){
+        var arr=[]; try{ arr = r&&r.value? JSON.parse(r.value):[]; }catch(e){ arr=[]; }
+        cb(arr);
+      }).catch(function(){ cb([]); });
+    }catch(e){ cb([]); }
+  }
+  function saveSuggestions(arr){
+    try{ window.storage.set(SKEY, JSON.stringify(arr)).catch(function(){}); }catch(e){}
+  }
+  function getSuggestionsOnly(){ return all.filter(function(d){ return d._user; }); }
+
+  // ---------- helpers ----------
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+  function dist(la1,lo1,la2,lo2){
+    var R=6371, dLa=(la2-la1)*Math.PI/180, dLo=(lo2-lo1)*Math.PI/180;
+    var x=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)*Math.sin(dLo/2);
+    return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+  }
+  function typeFull(type){ return ({ "PMC Nirmalya Kalash":t('tPMC'), "SWaCH Collection Point":t('tSWaCH'), "Ward Office Composting":t('tWard'), "Community":t('tComm') })[type] || type; }
+  function typeShort(d){ if(d._user) return t('fComm'); return ({ "PMC Nirmalya Kalash":t('fPMC'), "SWaCH Collection Point":t('fSWaCH'), "Ward Office Composting":t('fWard') })[d.type] || d.type; }
+  function acceptText(d){
+    if(lang==="en" || d._user) return d.accept;
+    var whole = String(d.accept||"").toLowerCase();
+    if(ACCEPT_MR[whole]) return ACCEPT_MR[whole];
+    return String(d.accept||"").split(",").map(function(tok){ var k=tok.trim().toLowerCase(); return ACCEPT_MR[k]||tok.trim(); }).join(", ");
+  }
+  function isActive(d){
+    if(d._user) return true;
+    if(d.active==="year") return true;
+    return (d.months||[]).indexOf(new Date().getMonth())>=0;
+  }
+
+  // ---------- map ----------
+  var map = L.map('map', { zoomControl:true }).setView([18.5204, 73.8567], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'&copy; OpenStreetMap contributors' }).addTo(map);
+
+  function pinIcon(d){
+    var c = TYPES[d.type] || "#9333ea";
+    var act = isActive(d);
+    var live = act ? '<div class="live"></div>' : '';
+    return L.divIcon({
+      className:'', iconSize:[26,26], iconAnchor:[13,26], popupAnchor:[0,-24],
+      html:'<div class="pin '+(act?'':'inactive')+'" style="background:'+c+'"><span>🌸</span>'+live+'</div>'
+    });
+  }
+
+  function popupHtml(d){
+    var dir = "https://www.google.com/maps/dir/?api=1&destination="+d.lat+","+d.lng;
+    var act = isActive(d);
+    var dStr = userPos ? '<div class="pl"><b>'+t('lDist')+':</b> '+dist(userPos[0],userPos[1],d.lat,d.lng).toFixed(1)+' '+t('distAway')+'</div>' : '';
+    return '<div class="pop">'+
+      '<h3>'+esc(d.name)+(d._user?' 🟣':'')+'</h3>'+
+      '<div class="pstat '+(act?'on':'off')+'"><span class="dot '+(act?'on':'off')+'"></span>'+(act?t('activeNow'):t('notActive'))+'</div>'+
+      '<div class="pa">'+esc(d.area)+'</div>'+
+      '<div class="pl"><b>'+t('lType')+':</b> '+esc(typeFull(d._user?"Community":d.type))+'</div>'+
+      '<div class="pl"><b>'+t('lAccepts')+':</b> '+esc(acceptText(d))+'</div>'+
+      dStr+
+      '<a class="dirbtn" href="'+dir+'" target="_blank" rel="noopener">'+t('getDir')+'</a>'+
+      '</div>';
+  }
+
+  function buildMarkers(rows){
+    markers.forEach(function(m){ map.removeLayer(m.marker); });
+    markers = [];
+    rows.forEach(function(d){
+      var mk = L.marker([d.lat,d.lng],{icon:pinIcon(d)}).addTo(map);
+      mk.bindPopup(popupHtml(d));
+      markers.push({ data:d, marker:mk });
+    });
+  }
+
+  // ---------- list / view ----------
+  function currentRows(){
+    var q = document.getElementById('search').value.trim().toLowerCase();
+    var f = document.getElementById('filter').value;
+    var rows = all.filter(function(d){
+      var typeOk = (f==="all") || (f==="Community"? d._user : (!d._user && d.type===f));
+      var qOk = !q || (d.name.toLowerCase().indexOf(q)>=0 || d.area.toLowerCase().indexOf(q)>=0);
+      var actOk = !activeOnly || isActive(d);
+      return typeOk && qOk && actOk;
+    });
+    if(userPos){
+      rows.forEach(function(d){ d._dist = dist(userPos[0],userPos[1],d.lat,d.lng); });
+      rows.sort(function(a,b){ return a._dist-b._dist; });
+    } else {
+      rows.sort(function(a,b){ return a.name.localeCompare(b.name); });
+    }
+    return rows;
+  }
+
+  function refresh(){
+    var rows = currentRows();
+    buildMarkers(rows);
+    var list = document.getElementById('list');
+    document.getElementById('count').textContent = rows.length + " " + (rows.length===1?t('pt1'):t('ptN'));
+    list.innerHTML = "";
+    if(!rows.length){
+      list.innerHTML = '<div style="text-align:center;color:#5d6b62;font-size:13px;padding:30px 16px;">'+t('noMatch')+'</div>';
+      return;
+    }
+    rows.forEach(function(d){
+      var color = TYPES[d._user?"Community":d.type] || "#9333ea";
+      var act = isActive(d);
+      var div = document.createElement('div');
+      div.className = "card";
+      div.innerHTML =
+        '<div class="top"><div><div class="nm">'+esc(d.name)+'</div><div class="area">'+esc(d.area)+'</div></div>'+
+        '<span class="badge" style="background:'+color+'">'+esc(typeShort(d))+'</span></div>'+
+        '<div class="meta"><span class="trust '+(d._user?'com':'ver')+'">'+(d._user?t('commTag'):t('verified'))+'</span><span class="tag">🌿 '+esc(acceptText(d))+'</span></div>'+
+        '<div class="status '+(act?'on':'off')+'"><span class="dot '+(act?'on':'off')+'"></span>'+(act?t('activeNow'):t('notActive'))+'</div>'+
+        '<div class="dist '+(userPos?'show':'')+'">📍 '+(d._dist!=null?d._dist.toFixed(1)+' '+t('distAway'):'')+'</div>';
+      div.onclick = function(){
+        map.flyTo([d.lat,d.lng], 15, {duration:.6});
+        var found = markers.filter(function(m){ return m.data===d; })[0];
+        if(found){ setTimeout(function(){ found.marker.openPopup(); }, 650); }
+      };
+      list.appendChild(div);
+    });
+  }
+
+  // ---------- language ----------
+  function applyLang(){
+    document.documentElement.lang = lang;
+    document.getElementById('h-title').textContent = t('title');
+    document.getElementById('h-tagline').textContent = t('tagline');
+    document.getElementById('search').placeholder = t('search');
+    var fo = document.getElementById('filter').options;
+    fo[0].textContent=t('allTypes'); fo[1].textContent=t('fPMC'); fo[2].textContent=t('fSWaCH'); fo[3].textContent=t('fWard'); fo[4].textContent=t('fComm');
+    document.getElementById('activeTxt').textContent = t('activeOnly');
+    document.getElementById('nearTxt').textContent = t('near');
+    document.getElementById('panelTitle').textContent = t('points');
+    document.getElementById('suggestTxt').textContent = t('suggest');
+    // suggest modal
+    document.getElementById('sgTitle').textContent = t('sgTitle');
+    document.getElementById('sgSub').textContent = t('sgSub');
+    document.getElementById('l-name').textContent = t('nameL');
+    document.getElementById('f-name').placeholder = t('nameP');
+    document.getElementById('l-area').textContent = t('areaL');
+    document.getElementById('f-area').placeholder = t('areaP');
+    document.getElementById('l-type').textContent = t('typeL');
+    document.getElementById('l-accept').textContent = t('acceptL');
+    document.getElementById('f-accept').placeholder = t('acceptP');
+    document.getElementById('l-loc').textContent = t('locL');
+    document.getElementById('useLoc').textContent = t('useLoc');
+    document.getElementById('pickLoc').textContent = t('pickLoc');
+    document.getElementById('cancelBtn').textContent = t('cancel');
+    document.getElementById('saveBtn').textContent = t('add');
+    if(!picked){ document.getElementById('coordNote').textContent = t('noLoc'); }
+    var fto = document.getElementById('f-type').options;
+    fto[0].textContent=t('tPMC'); fto[1].textContent=t('tSWaCH'); fto[2].textContent=t('tWard'); fto[3].textContent=t('tComm');
+    document.getElementById('pickInstr').textContent = t('pickInstr');
+    document.getElementById('pickCancel').textContent = t('cancel');
+    document.getElementById('abClose').textContent = t('close');
+    document.getElementById('ab-title').textContent = t('aboutTitle');
+    buildAbout();
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('.langtog button'), function(b){
+    b.onclick = function(){
+      lang = b.getAttribute('data-l');
+      Array.prototype.forEach.call(document.querySelectorAll('.langtog button'), function(x){ x.classList.toggle('on', x===b); });
+      applyLang();
+      refresh();
+    };
+  });
+
+  // ---------- about ----------
+  function buildAbout(){
+    var html = "";
+    t('about').forEach(function(p){ html += '<p class="ab-p">'+esc(p)+'</p>'; });
+    html += '<div class="legend"><h3>'+t('legendTitle')+'</h3>'+
+      '<div class="leg-row"><span class="leg-dot" style="background:#15803d"></span>'+esc(t('tPMC'))+'</div>'+
+      '<div class="leg-row"><span class="leg-dot" style="background:#0891b2"></span>'+esc(t('tSWaCH'))+'</div>'+
+      '<div class="leg-row"><span class="leg-dot" style="background:#d97706"></span>'+esc(t('tWard'))+'</div>'+
+      '<div class="leg-row"><span class="leg-dot" style="background:#9333ea"></span>'+esc(t('tComm'))+'</div>'+
+      '<div class="leg-row"><span class="leg-live"></span>'+esc(t('legActive'))+'</div>'+
+      '</div>';
+    document.getElementById('ab-body').innerHTML = html;
+  }
+  var aboutOverlay = document.getElementById('aboutOverlay');
+  document.getElementById('aboutBtn').onclick = function(){ aboutOverlay.classList.add('show'); };
+  document.getElementById('abClose').onclick = function(){ aboutOverlay.classList.remove('show'); };
+  aboutOverlay.onclick = function(e){ if(e.target===aboutOverlay) aboutOverlay.classList.remove('show'); };
+
+  // ---------- active filter ----------
+  var activeChip = document.getElementById('activeChip');
+  activeChip.onclick = function(){ activeOnly=!activeOnly; activeChip.classList.toggle('on', activeOnly); refresh(); };
+
+  // ---------- near me ----------
+  document.getElementById('nearBtn').onclick = function(){
+    if(!navigator.geolocation){ toast(t('noSupport')); return; }
+    toast(t('locating'));
+    navigator.geolocation.getCurrentPosition(function(p){
+      userPos = [p.coords.latitude, p.coords.longitude];
+      if(userMarker) map.removeLayer(userMarker);
+      userMarker = L.marker(userPos, { icon:L.divIcon({className:'',iconSize:[18,18],iconAnchor:[9,9],html:'<div class="userpin"></div>'}) }).addTo(map);
+      userMarker.bindPopup(t('youHere'));
+      map.flyTo(userPos, 13, {duration:.8});
+      refresh();
+      toast(t('nearShown'));
+    }, function(){ toast(t('locFail')); }, { enableHighAccuracy:true, timeout:8000 });
+  };
+
+  document.getElementById('search').oninput = refresh;
+  document.getElementById('filter').onchange = refresh;
+
+  // ---------- suggest modal ----------
+  var overlay = document.getElementById('overlay');
+  function openModal(){ overlay.classList.add('show'); }
+  function closeModal(){ overlay.classList.remove('show'); }
+  document.getElementById('suggestBtn').onclick = openModal;
+  document.getElementById('cancelBtn').onclick = function(){ closeModal(); resetForm(); };
+  overlay.onclick = function(e){ if(e.target===overlay){ closeModal(); resetForm(); } };
+
+  var coordNote = document.getElementById('coordNote');
+  function setPicked(lat,lng){
+    picked = { lat:lat, lng:lng };
+    coordNote.textContent = t('coordSet')+" "+lat.toFixed(5)+", "+lng.toFixed(5);
+    coordNote.classList.add('set'); validate();
+  }
+  function resetForm(){
+    ['f-name','f-area','f-accept'].forEach(function(id){ document.getElementById(id).value=""; });
+    document.getElementById('f-type').value = "Community";
+    picked = null; coordNote.textContent = t('noLoc'); coordNote.classList.remove('set'); validate();
+  }
+  function validate(){
+    var ok = document.getElementById('f-name').value.trim() && document.getElementById('f-area').value.trim() && picked;
+    document.getElementById('saveBtn').disabled = !ok;
+  }
+  document.getElementById('f-name').oninput = validate;
+  document.getElementById('f-area').oninput = validate;
+
+  document.getElementById('useLoc').onclick = function(){
+    if(!navigator.geolocation){ toast(t('noSupport')); return; }
+    toast(t('gettingLoc'));
+    navigator.geolocation.getCurrentPosition(function(p){
+      setPicked(p.coords.latitude, p.coords.longitude); toast(t('locCaptured'));
+    }, function(){ toast(t('locFail')); }, {enableHighAccuracy:true, timeout:8000});
+  };
+
+  var pickbar = document.getElementById('pickbar');
+  document.getElementById('pickLoc').onclick = function(){
+    closeModal(); pickMode = true; pickbar.classList.add('show'); toast(t('tapMap'));
+  };
+  document.getElementById('pickCancel').onclick = function(){ pickMode=false; pickbar.classList.remove('show'); openModal(); };
+  map.on('click', function(e){
+    if(!pickMode) return;
+    pickMode=false; pickbar.classList.remove('show'); setPicked(e.latlng.lat, e.latlng.lng); openModal();
+  });
+
+  document.getElementById('saveBtn').onclick = function(){
+    var rec = {
+      name: document.getElementById('f-name').value.trim(),
+      area: document.getElementById('f-area').value.trim(),
+      type: document.getElementById('f-type').value,
+      accept: document.getElementById('f-accept').value.trim() || (lang==="mr"?"फुलं व पूजा-निर्माल्य":"Floral & puja waste"),
+      active:"year", lat: picked.lat, lng: picked.lng, _user:true
+    };
+    all.push(rec);
+    saveSuggestions(getSuggestionsOnly().map(function(d){
+      return {name:d.name,area:d.area,type:d.type,accept:d.accept,lat:d.lat,lng:d.lng};
+    }));
+    refresh(); closeModal(); resetForm();
+    map.flyTo([rec.lat,rec.lng], 15, {duration:.7});
+    toast(t('added'));
+  };
+
+  // ---------- toast ----------
+  var toastEl = document.getElementById('toast'), toastT;
+  function toast(msg){
+    toastEl.textContent = msg; toastEl.classList.add('show');
+    clearTimeout(toastT); toastT = setTimeout(function(){ toastEl.classList.remove('show'); }, 2200);
+  }
+
+  // ---------- init ----------
+  function init(){
+    all = SEED.slice();
+    loadSuggestions(function(saved){
+      saved.forEach(function(s){
+        all.push({ name:s.name, area:s.area, type:s.type||"Community", accept:s.accept, active:"year", lat:s.lat, lng:s.lng, _user:true });
+      });
+      applyLang();
+      refresh();
+    });
+  }
+  init();
+})();
+</script>
+</body>
+</html>
