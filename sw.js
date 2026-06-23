@@ -1,5 +1,5 @@
 // sw.js — Pune Nirmalya Finder service worker
-const CACHE = 'nirmalya-v1';   // bump this version whenever you update index.html
+const CACHE = 'nirmalya-v2';   // bump this version whenever you update index.html
 const SHELL = [
   './',
   './index.html',
