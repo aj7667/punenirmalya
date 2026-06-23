@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "in.ilxs.punenirmalya",
+        "sha256_cert_fingerprints": ["43:4B:01:33:A3:46:29:A9:63:24:50:90:CD:C3:BD:1F:4A:1B:45:AE:CB:87:11:BF:78:78:CA:D1:72:89:68:0E"]
+      }
+    }]
