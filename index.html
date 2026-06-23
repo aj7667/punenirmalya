@@ -261,7 +261,7 @@
   var lang = "en";
 
   // ===== Supabase (realtime backend) — paste your two values below, then redeploy =====
-  var SUPA_URL = "https://gkuupqppzhikoighzplz.supabase.co/rest/v1/";   // e.g. "https://abcd1234.supabase.co"
+  var SUPA_URL = "https://gkuupqppzhikoighzplz.supabase.co";   // e.g. "https://abcd1234.supabase.co"
   var SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdXVwcXBwemhpa29pZ2h6cGx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2ODg3MjksImV4cCI6MjA5NzI2NDcyOX0.l5TThjBExo7Q7G02njbv1pjfB_ogb9Z30ybPUwT9YN4";   // your anon / public key (safe to expose in the browser)
   var sb = (SUPA_URL && SUPA_KEY && window.supabase) ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
