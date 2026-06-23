@@ -15,7 +15,7 @@
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   :root{
     --green:#15803d; --green-d:#166534; --green-l:#22c55e;
-    --teal:#0891b2; --amber:#d97706; --purple:#9333ea;
+    --teal:#0891b2; --amber:#d97706; --purple:#9333ea; --red:#dc2626;
     --bg:#f4f7f3; --card:#ffffff; --ink:#13311f; --muted:#5d6b62; --line:#e3e9e2;
   }
   html,body{ height:100%; }
@@ -66,7 +66,7 @@
   .card .nm{ font-size:15px; font-weight:700; line-height:1.25; }
   .card .area{ font-size:12px; color:var(--muted); margin-top:2px; }
   .badge{ font-size:10px; font-weight:700; padding:3px 8px; border-radius:20px; color:#fff; white-space:nowrap; flex-shrink:0; }
-  .meta{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .meta{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; align-items:center; }
   .tag{ font-size:11px; color:var(--muted); background:#f0f4ef; padding:3px 8px; border-radius:7px; }
   .trust{ display:inline-flex; align-items:center; font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:7px; }
   .trust.ver{ background:#e7f6ea; color:#15803d; }
@@ -79,6 +79,12 @@
   .dot.on{ background:#22c55e; animation:pulse 1.8s infinite; }
   .dot.off{ background:#9aa6a0; }
   @keyframes pulse{ 0%{ box-shadow:0 0 0 0 rgba(34,197,94,.5) } 70%{ box-shadow:0 0 0 6px rgba(34,197,94,0) } 100%{ box-shadow:0 0 0 0 rgba(34,197,94,0) } }
+
+  .livechip{ display:inline-flex; align-items:center; font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:20px; }
+  .livechip.available{ background:#e7f6ea; color:#15803d; }
+  .livechip.full{ background:#fff3e0; color:#d97706; }
+  .livechip.closed{ background:#fde8e8; color:#dc2626; }
+  .livechip.none{ background:#eef0ee; color:#8a948c; }
 
   .pin{ display:flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:2.5px solid #fff; box-shadow:0 2px 5px rgba(0,0,0,.35); position:relative; }
   .pin span{ transform:rotate(45deg); font-size:12px; }
@@ -95,6 +101,15 @@
   .pop .pl{ font-size:12px; margin:3px 0; color:var(--ink); }
   .pop .pl b{ color:var(--muted); font-weight:600; }
   .pop .dirbtn{ display:block; text-align:center; margin-top:10px; background:var(--green); color:#fff; padding:8px; border-radius:9px; text-decoration:none; font-size:13px; font-weight:700; }
+  .livebar{ margin:9px 0 5px; }
+  .reportlbl{ font-size:11px; color:var(--muted); font-weight:600; margin-bottom:5px; }
+  .reportrow{ display:flex; gap:6px; }
+  .reportrow button{ flex:1; border:1px solid var(--line); background:#fff; border-radius:8px; padding:7px 4px; font-size:11px; font-weight:700; cursor:pointer; }
+  .reportrow button.r-available{ color:#15803d; } .reportrow button.r-full{ color:#d97706; } .reportrow button.r-closed{ color:#dc2626; }
+  .reportrow button:active{ background:#f3f6f2; }
+  .adminrow{ display:flex; gap:6px; margin-top:9px; border-top:1px dashed var(--line); padding-top:9px; }
+  .adminrow button{ flex:1; border:none; border-radius:8px; padding:8px; font-size:12px; font-weight:700; cursor:pointer; color:#fff; }
+  .adminrow .vbtn{ background:#15803d; } .adminrow .dbtn{ background:#dc2626; }
 
   .fab{ position:absolute; right:16px; bottom:18px; background:var(--green); color:#fff; border:none; height:48px; padding:0 18px; border-radius:26px; font-size:14px; font-weight:700; box-shadow:0 4px 14px rgba(20,80,40,.35); cursor:pointer; display:flex; align-items:center; gap:7px; z-index:600; }
   .fab:active{ background:var(--green-d); }
@@ -126,6 +141,9 @@
   .leg-row{ display:flex; align-items:center; gap:9px; font-size:12.5px; margin:6px 0; color:var(--ink); }
   .leg-dot{ width:16px; height:16px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.25); flex-shrink:0; }
   .leg-live{ width:12px;height:12px;border-radius:50%;background:#22c55e;flex-shrink:0;}
+  .ab-admin{ border-top:1px solid var(--line); padding-top:12px; margin-bottom:12px; display:flex; align-items:center; gap:10px; }
+  .ab-admin button{ background:#eef2ee; border:1px solid var(--line); color:var(--muted); padding:7px 13px; border-radius:9px; font-size:12.5px; font-weight:700; cursor:pointer; }
+  .ab-admin span{ font-size:12px; color:var(--green-d); font-weight:600; }
   .ab-close{ width:100%; padding:12px; border:none; background:var(--green); color:#fff; border-radius:11px; font-size:14px; font-weight:700; cursor:pointer; margin-top:4px; }
 
   .pickbar{ position:fixed; top:0; left:0; right:0; background:var(--green-d); color:#fff; padding:12px 16px; z-index:1200; display:none; align-items:center; justify-content:space-between; font-size:13px; font-weight:600; box-shadow:0 2px 8px rgba(0,0,0,.25); gap:10px; }
@@ -243,7 +261,22 @@
     <div class="sheet">
       <h2 id="ab-title">About this app</h2>
       <div id="ab-body"></div>
+      <div class="ab-admin" id="ab-admin"><button id="adminLink">Admin</button> <span id="adminWho"></span></div>
       <button class="ab-close" id="abClose">Close</button>
+    </div>
+  </div>
+
+  <!-- Admin login modal -->
+  <div class="overlay" id="adminOverlay">
+    <div class="sheet">
+      <h2 id="adm-title">Admin login</h2>
+      <p class="sub" id="adm-sub">Sign in to verify or remove points.</p>
+      <div class="field"><label id="adm-eml">Email</label><input id="adm-email" type="email" autocomplete="username"></div>
+      <div class="field"><label id="adm-pwl">Password</label><input id="adm-pass" type="password" autocomplete="current-password"></div>
+      <div class="actions">
+        <button class="cancel" id="adm-cancel">Cancel</button>
+        <button class="save" id="adm-signin">Sign in</button>
+      </div>
     </div>
   </div>
 
@@ -286,6 +319,14 @@
       tPMC:"PMC Nirmalya Kalash", tSWaCH:"SWaCH Collection Point", tWard:"Ward Office Composting", tComm:"Community-reported",
       lType:"Type", lAccepts:"Accepts", lDist:"Distance",
       verified:"✓ Verified", commTag:"Community-reported",
+      available:"Available", full:"Full", closed:"Closed",
+      reportPrompt:"Report current status:", noReport:"No recent report", confirmedAgo:"confirmed",
+      justNow:"just now", minAgo:"min ago", hrAgo:"hr ago", dayAgo:"days ago", thanksReport:"Thanks — status updated",
+      admin:"Admin", adminLogin:"Admin login", adminSub:"Sign in to verify or remove points.",
+      emailL:"Email", pwL:"Password", signIn:"Sign in", signOut:"Sign out",
+      loginFail:"Login failed — check your details", adminOn:"Signed in as admin",
+      verifyBtn:"✓ Verify", deleteBtn:"Delete", confirmDel:"Delete this point permanently?",
+      verifiedDone:"Point verified", deletedDone:"Point removed",
       locating:"Locating you…", nearShown:"Showing points nearest to you",
       locFail:"Couldn't get your location — check permissions", noSupport:"Location not supported on this device",
       gettingLoc:"Getting your location…", locCaptured:"Location captured",
@@ -320,6 +361,14 @@
       tPMC:"पीएमसी निर्माल्य कलश", tSWaCH:"स्वच्छ संकलन केंद्र", tWard:"प्रभाग कार्यालय कंपोस्टिंग", tComm:"नागरिक-सूचित",
       lType:"प्रकार", lAccepts:"स्वीकारले", lDist:"अंतर",
       verified:"✓ पडताळलेले", commTag:"नागरिक-सूचित",
+      available:"उपलब्ध", full:"भरलेले", closed:"बंद",
+      reportPrompt:"सध्याची स्थिती कळवा:", noReport:"अलीकडील माहिती नाही", confirmedAgo:"नोंद",
+      justNow:"आत्ताच", minAgo:"मिनिटांपूर्वी", hrAgo:"तासांपूर्वी", dayAgo:"दिवसांपूर्वी", thanksReport:"धन्यवाद — स्थिती अपडेट झाली",
+      admin:"अ‍ॅडमिन", adminLogin:"अ‍ॅडमिन लॉगिन", adminSub:"केंद्रे पडताळण्यासाठी किंवा काढण्यासाठी साइन इन करा.",
+      emailL:"ईमेल", pwL:"पासवर्ड", signIn:"साइन इन", signOut:"साइन आउट",
+      loginFail:"लॉगिन अयशस्वी — तपशील तपासा", adminOn:"अ‍ॅडमिन म्हणून साइन इन",
+      verifyBtn:"✓ पडताळा", deleteBtn:"काढा", confirmDel:"हे केंद्र कायमचे काढायचे?",
+      verifiedDone:"केंद्र पडताळले", deletedDone:"केंद्र काढले",
       locating:"तुमचं स्थान शोधत आहे…", nearShown:"तुमच्या जवळची केंद्रे दाखवत आहे",
       locFail:"स्थान मिळालं नाही — परवानगी तपासा", noSupport:"या उपकरणावर स्थान समर्थित नाही",
       gettingLoc:"तुमचं स्थान घेत आहे…", locCaptured:"स्थान घेतलं",
@@ -352,7 +401,6 @@
     "floral & organic waste":"फुलं व सेंद्रिय निर्माल्य"
   };
 
-  // active:'year' = open year-round; 'festival' = busiest Aug-Sep (months 7,8)
   var SEED = [
     { name:"Sangam Ghat", area:"Sangamwadi (Mula-Mutha confluence)", type:"PMC Nirmalya Kalash", accept:"Flowers, garlands, durva, prasad leaves", active:"festival", months:[7,8], lat:18.5293, lng:73.8559 },
     { name:"Omkareshwar Temple Ghat", area:"Shaniwar Peth", type:"SWaCH Collection Point", accept:"Flowers, garlands, coconuts", active:"festival", months:[7,8], lat:18.5168, lng:73.8527 },
@@ -377,8 +425,10 @@
   var pickMode = false;
   var picked = null;
   var activeOnly = false;
+  var isAdmin = false;
+  var lastSelf = null;
 
-  // ---------- storage ----------
+  // ---------- device storage (fallback only) ----------
   var SKEY = "nirmalya:suggestions";
   function loadSuggestions(cb){
     try{
@@ -395,6 +445,8 @@
 
   // ---------- helpers ----------
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+  function byId(id){ for(var i=0;i<all.length;i++){ if(all[i].id===id) return all[i]; } return null; }
+  function indexById(id){ for(var i=0;i<all.length;i++){ if(all[i].id===id) return i; } return -1; }
   function dist(la1,lo1,la2,lo2){
     var R=6371, dLa=(la2-la1)*Math.PI/180, dLo=(lo2-lo1)*Math.PI/180;
     var x=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)*Math.sin(dLo/2);
@@ -413,13 +465,21 @@
     if(d.active==="year") return true;
     return (d.months||[]).indexOf(new Date().getMonth())>=0;
   }
+  function ago(ms){
+    if(!ms) return '';
+    var s=Math.floor((Date.now()-ms)/1000);
+    if(s<60) return t('justNow');
+    var m=Math.floor(s/60); if(m<60) return m+' '+t('minAgo');
+    var h=Math.floor(m/60); if(h<24) return h+' '+t('hrAgo');
+    return Math.floor(h/24)+' '+t('dayAgo');
+  }
 
   // ---------- map ----------
   var map = L.map('map', { zoomControl:true }).setView([18.5204, 73.8567], 12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'&copy; OpenStreetMap contributors' }).addTo(map);
 
   function pinIcon(d){
-    var c = TYPES[d.type] || "#9333ea";
+    var c = TYPES[d._user?"Community":d.type] || "#9333ea";
     var act = isActive(d);
     var live = act ? '<div class="live"></div>' : '';
     return L.divIcon({
@@ -428,18 +488,43 @@
     });
   }
 
+  function liveChipHtml(d){
+    if(d.liveState){
+      return '<span id="live-'+d.id+'" class="livechip '+d.liveState+'">'+t(d.liveState)+' · '+t('confirmedAgo')+' '+ago(d.liveAt)+'</span>';
+    }
+    return '<span id="live-'+d.id+'" class="livechip none">'+t('noReport')+'</span>';
+  }
+
   function popupHtml(d){
     var dir = "https://www.google.com/maps/dir/?api=1&destination="+d.lat+","+d.lng;
     var act = isActive(d);
     var dStr = userPos ? '<div class="pl"><b>'+t('lDist')+':</b> '+dist(userPos[0],userPos[1],d.lat,d.lng).toFixed(1)+' '+t('distAway')+'</div>' : '';
+    var live = '';
+    if (sb && d.id) {
+      live = '<div class="livebar">'+liveChipHtml(d)+'</div>'+
+        '<div class="reportlbl">'+t('reportPrompt')+'</div>'+
+        '<div class="reportrow">'+
+          '<button class="r-available" data-loc="'+d.id+'" data-report="available">'+t('available')+'</button>'+
+          '<button class="r-full" data-loc="'+d.id+'" data-report="full">'+t('full')+'</button>'+
+          '<button class="r-closed" data-loc="'+d.id+'" data-report="closed">'+t('closed')+'</button>'+
+        '</div>';
+    }
+    var admin = '';
+    if (isAdmin && sb && d.id) {
+      admin = '<div class="adminrow">'+
+        (d._user ? '<button class="vbtn" data-verify="'+d.id+'">'+t('verifyBtn')+'</button>' : '')+
+        '<button class="dbtn" data-delete="'+d.id+'">'+t('deleteBtn')+'</button>'+
+      '</div>';
+    }
     return '<div class="pop">'+
       '<h3>'+esc(d.name)+(d._user?' 🟣':'')+'</h3>'+
       '<div class="pstat '+(act?'on':'off')+'"><span class="dot '+(act?'on':'off')+'"></span>'+(act?t('activeNow'):t('notActive'))+'</div>'+
       '<div class="pa">'+esc(d.area)+'</div>'+
       '<div class="pl"><b>'+t('lType')+':</b> '+esc(typeFull(d._user?"Community":d.type))+'</div>'+
       '<div class="pl"><b>'+t('lAccepts')+':</b> '+esc(acceptText(d))+'</div>'+
-      dStr+
+      dStr + live +
       '<a class="dirbtn" href="'+dir+'" target="_blank" rel="noopener">'+t('getDir')+'</a>'+
+      admin +
       '</div>';
   }
 
@@ -452,6 +537,20 @@
       markers.push({ data:d, marker:mk });
     });
   }
+
+  // wire popup buttons after a popup opens
+  map.on('popupopen', function(e){
+    var el = e.popup.getElement(); if(!el) return;
+    Array.prototype.forEach.call(el.querySelectorAll('[data-report]'), function(b){
+      b.onclick = function(){ reportStatus(b.getAttribute('data-loc'), b.getAttribute('data-report')); };
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('[data-verify]'), function(b){
+      b.onclick = function(){ verifyPoint(b.getAttribute('data-verify')); };
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('[data-delete]'), function(b){
+      b.onclick = function(){ deletePoint(b.getAttribute('data-delete')); };
+    });
+  });
 
   // ---------- list / view ----------
   function currentRows(){
@@ -485,12 +584,13 @@
     rows.forEach(function(d){
       var color = TYPES[d._user?"Community":d.type] || "#9333ea";
       var act = isActive(d);
+      var liveBit = d.liveState ? '<span class="livechip '+d.liveState+'" style="font-size:10px;padding:2px 8px">'+t(d.liveState)+'</span>' : '';
       var div = document.createElement('div');
       div.className = "card";
       div.innerHTML =
         '<div class="top"><div><div class="nm">'+esc(d.name)+'</div><div class="area">'+esc(d.area)+'</div></div>'+
         '<span class="badge" style="background:'+color+'">'+esc(typeShort(d))+'</span></div>'+
-        '<div class="meta"><span class="trust '+(d._user?'com':'ver')+'">'+(d._user?t('commTag'):t('verified'))+'</span><span class="tag">🌿 '+esc(acceptText(d))+'</span></div>'+
+        '<div class="meta"><span class="trust '+(d._user?'com':'ver')+'">'+(d._user?t('commTag'):t('verified'))+'</span><span class="tag">🌿 '+esc(acceptText(d))+'</span>'+liveBit+'</div>'+
         '<div class="status '+(act?'on':'off')+'"><span class="dot '+(act?'on':'off')+'"></span>'+(act?t('activeNow'):t('notActive'))+'</div>'+
         '<div class="dist '+(userPos?'show':'')+'">📍 '+(d._dist!=null?d._dist.toFixed(1)+' '+t('distAway'):'')+'</div>';
       div.onclick = function(){
@@ -500,6 +600,38 @@
       };
       list.appendChild(div);
     });
+  }
+
+  // ---------- live status reporting ----------
+  function updateLivePopupChip(locId){
+    var d = byId(locId); if(!d) return;
+    var el = document.getElementById('live-'+locId);
+    if(el){ el.className = 'livechip '+d.liveState; el.textContent = t(d.liveState)+' · '+t('confirmedAgo')+' '+ago(d.liveAt); }
+  }
+  function reportStatus(locId, state){
+    var d = byId(locId);
+    if(d){ d.liveState = state; d.liveAt = Date.now(); }
+    lastSelf = { locId:locId, state:state, ts:Date.now() };
+    updateLivePopupChip(locId);
+    if (sb) { sb.from('status_reports').insert({ location_id: locId, state: state }).then(function(){}).catch(function(){}); }
+    toast(t('thanksReport'));
+  }
+
+  // ---------- moderation ----------
+  function verifyPoint(locId){
+    if(!sb) return;
+    sb.from('locations').update({ status:'verified' }).eq('id', locId).then(function(res){
+      if(res && !res.error){ var d=byId(locId); if(d){ d._user=false; } refresh(); toast(t('verifiedDone')); }
+      else { toast(t('loginFail')); }
+    }).catch(function(){ toast(t('loginFail')); });
+  }
+  function deletePoint(locId){
+    if(!sb) return;
+    if(!window.confirm(t('confirmDel'))) return;
+    sb.from('locations').delete().eq('id', locId).then(function(res){
+      if(res && !res.error){ all = all.filter(function(x){ return x.id!==locId; }); refresh(); toast(t('deletedDone')); }
+      else { toast(t('loginFail')); }
+    }).catch(function(){ toast(t('loginFail')); });
   }
 
   // ---------- language ----------
@@ -514,7 +646,6 @@
     document.getElementById('nearTxt').textContent = t('near');
     document.getElementById('panelTitle').textContent = t('points');
     document.getElementById('suggestTxt').textContent = t('suggest');
-    // suggest modal
     document.getElementById('sgTitle').textContent = t('sgTitle');
     document.getElementById('sgSub').textContent = t('sgSub');
     document.getElementById('l-name').textContent = t('nameL');
@@ -536,6 +667,13 @@
     document.getElementById('pickCancel').textContent = t('cancel');
     document.getElementById('abClose').textContent = t('close');
     document.getElementById('ab-title').textContent = t('aboutTitle');
+    document.getElementById('adm-title').textContent = t('adminLogin');
+    document.getElementById('adm-sub').textContent = t('adminSub');
+    document.getElementById('adm-eml').textContent = t('emailL');
+    document.getElementById('adm-pwl').textContent = t('pwL');
+    document.getElementById('adm-cancel').textContent = t('cancel');
+    document.getElementById('adm-signin').textContent = t('signIn');
+    refreshAuthUI();
     buildAbout();
   }
 
@@ -565,6 +703,36 @@
   document.getElementById('aboutBtn').onclick = function(){ aboutOverlay.classList.add('show'); };
   document.getElementById('abClose').onclick = function(){ aboutOverlay.classList.remove('show'); };
   aboutOverlay.onclick = function(e){ if(e.target===aboutOverlay) aboutOverlay.classList.remove('show'); };
+
+  // ---------- admin auth ----------
+  function refreshAuthUI(){
+    var link = document.getElementById('adminLink');
+    var who = document.getElementById('adminWho');
+    document.getElementById('ab-admin').style.display = sb ? 'flex' : 'none';
+    if(isAdmin){ link.textContent = t('signOut'); who.textContent = t('adminOn'); }
+    else { link.textContent = t('admin'); who.textContent = ''; }
+  }
+  var adminOverlay = document.getElementById('adminOverlay');
+  document.getElementById('adminLink').onclick = function(){
+    if(!sb) return;
+    if(isAdmin){ sb.auth.signOut(); return; }
+    aboutOverlay.classList.remove('show');
+    adminOverlay.classList.add('show');
+  };
+  document.getElementById('adm-cancel').onclick = function(){ adminOverlay.classList.remove('show'); };
+  adminOverlay.onclick = function(e){ if(e.target===adminOverlay) adminOverlay.classList.remove('show'); };
+  document.getElementById('adm-signin').onclick = function(){
+    if(!sb) return;
+    var email = document.getElementById('adm-email').value.trim();
+    var pass = document.getElementById('adm-pass').value;
+    sb.auth.signInWithPassword({ email:email, password:pass }).then(function(res){
+      if(res && res.data && res.data.session){
+        adminOverlay.classList.remove('show');
+        document.getElementById('adm-pass').value = "";
+        toast(t('adminOn'));
+      } else { toast(t('loginFail')); }
+    }).catch(function(){ toast(t('loginFail')); });
+  };
 
   // ---------- active filter ----------
   var activeChip = document.getElementById('activeChip');
@@ -670,26 +838,33 @@
     clearTimeout(toastT); toastT = setTimeout(function(){ toastEl.classList.remove('show'); }, 2200);
   }
 
-  // ---------- init ----------
+  // ---------- realtime + init ----------
   function rowToRec(r){
     return { id:r.id, name:r.name, area:r.area, type:r.type, accept:r.accept,
              active:r.active_type||'year', months:[7,8], lat:Number(r.lat), lng:Number(r.lng),
-             _user:(r.status!=='verified') };
+             _user:(r.status!=='verified'), liveState:null, liveAt:null };
   }
   function subscribeRealtime(){
-    sb.channel('locations-rt')
+    sb.channel('rt')
       .on('postgres_changes', { event:'INSERT', schema:'public', table:'locations' }, function(p){
         var rec = rowToRec(p.new);
         if (!all.some(function(d){ return d.id===rec.id; })) { all.push(rec); refresh(); }
       })
       .on('postgres_changes', { event:'UPDATE', schema:'public', table:'locations' }, function(p){
         var rec = rowToRec(p.new);
-        var i = all.findIndex(function(d){ return d.id===rec.id; });
-        if (i>=0) { all[i]=rec; } else { all.push(rec); }
+        var i = indexById(rec.id);
+        if (i>=0) { rec.liveState=all[i].liveState; rec.liveAt=all[i].liveAt; all[i]=rec; } else { all.push(rec); }
         refresh();
       })
       .on('postgres_changes', { event:'DELETE', schema:'public', table:'locations' }, function(p){
         all = all.filter(function(d){ return d.id!==p.old.id; });
+        refresh();
+      })
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'status_reports' }, function(p){
+        var r = p.new; var d = byId(r.location_id); if(!d) return;
+        var ts = new Date(r.created_at).getTime();
+        if(!d.liveAt || ts>=d.liveAt){ d.liveState = r.state; d.liveAt = ts; }
+        if(lastSelf && lastSelf.locId===r.location_id && lastSelf.state===r.state && (Date.now()-lastSelf.ts)<6000){ return; }
         refresh();
       })
       .subscribe();
@@ -697,10 +872,19 @@
   function init(){
     applyLang();
     if (sb) {
+      sb.auth.getSession().then(function(r){ isAdmin = !!(r && r.data && r.data.session); refreshAuthUI(); });
+      sb.auth.onAuthStateChange(function(_e, session){ isAdmin = !!session; refreshAuthUI(); refresh(); });
       sb.from('locations').select('*').then(function(res){
         all = (res && res.data && res.data.length) ? res.data.map(rowToRec) : SEED.slice();
-        refresh();
-        subscribeRealtime();
+        sb.from('status_reports').select('*').order('created_at',{ascending:false}).then(function(sres){
+          if (sres && sres.data) {
+            var seen = {};
+            sres.data.forEach(function(r){
+              if(!seen[r.location_id]){ seen[r.location_id]=true; var d=byId(r.location_id); if(d){ d.liveState=r.state; d.liveAt=new Date(r.created_at).getTime(); } }
+            });
+          }
+          refresh(); subscribeRealtime();
+        }).catch(function(){ refresh(); subscribeRealtime(); });
       }).catch(function(){ all = SEED.slice(); refresh(); });
     } else {
       all = SEED.slice();
