@@ -1,13 +1,11 @@
 // sw.js — Pune Nirmalya Finder service worker
-const CACHE = 'nirmalya-v3';   // bump this version whenever you update index.html
+const CACHE = 'nirmalya-v5';   // bump this number whenever you change index.html or sw.js
 const SHELL = [
   './',
   './index.html',
   './manifest.json',
   './icon-192.png',
-  './icon-512.png',
-  'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'
+  './icon-512.png'
 ];
 
 self.addEventListener('install', (e) => {
@@ -26,16 +24,16 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   const req = e.request;
-  if (req.method !== 'GET') return;
+  if (req.method !== 'GET') return;                  // never intercept writes (POST/DELETE/etc.)
+
   const url = new URL(req.url);
 
-  // Map tiles: always try the network first; don't permanently fill the cache
-  if (url.hostname.endsWith('tile.openstreetmap.org')) {
-    e.respondWith(fetch(req).catch(() => caches.match(req)));
-    return;
-  }
+  // IMPORTANT: only ever cache OUR OWN files.
+  // Everything cross-origin — Supabase API + realtime, OpenStreetMap tiles,
+  // and CDN scripts — must always go straight to the network so data is never stale.
+  if (url.origin !== self.location.origin) return;
 
-  // App shell + static assets: serve from cache, fall back to network
+  // Same-origin app shell: serve from cache, fall back to network, then to index.html.
   e.respondWith(
     caches.match(req).then((cached) =>
       cached || fetch(req).then((res) => {
