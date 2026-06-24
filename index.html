@@ -1,10 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Pune Nirmalya Finder</title>
- <!-- Google tag (gtag.js) -->
+<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-HKLQBG8G1Y"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -13,6 +10,8 @@
   gtag('config', 'G-HKLQBG8G1Y');
 </script>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pune Nirmalya Finder</title>
 <meta name="theme-color" content="#15803d">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="icon-192.png">
@@ -300,6 +299,9 @@
 (function(){
   "use strict";
 
+  // Safe analytics helper — never breaks the app if gtag is blocked/missing
+  function track(name, params){ try { if (window.gtag) gtag('event', name, params || {}); } catch(e){} }
+
   var lang = "en";
 
   // ===== Supabase (realtime backend) — paste your two values below, then redeploy =====
@@ -336,6 +338,7 @@
       loginFail:"Login failed — check your details", adminOn:"Signed in as admin",
       verifyBtn:"✓ Verify", deleteBtn:"Delete", confirmDel:"Delete this point permanently?",
       verifiedDone:"Point verified", deletedDone:"Point removed",
+      actionFail:"Couldn't save — make sure you're signed in (check Supabase policies)",
       locating:"Locating you…", nearShown:"Showing points nearest to you",
       locFail:"Couldn't get your location — check permissions", noSupport:"Location not supported on this device",
       gettingLoc:"Getting your location…", locCaptured:"Location captured",
@@ -378,6 +381,7 @@
       loginFail:"लॉगिन अयशस्वी — तपशील तपासा", adminOn:"अ‍ॅडमिन म्हणून साइन इन",
       verifyBtn:"✓ पडताळा", deleteBtn:"काढा", confirmDel:"हे केंद्र कायमचे काढायचे?",
       verifiedDone:"केंद्र पडताळले", deletedDone:"केंद्र काढले",
+      actionFail:"जतन झाले नाही — साइन इन तपासा (Supabase धोरणे तपासा)",
       locating:"तुमचं स्थान शोधत आहे…", nearShown:"तुमच्या जवळची केंद्रे दाखवत आहे",
       locFail:"स्थान मिळालं नाही — परवानगी तपासा", noSupport:"या उपकरणावर स्थान समर्थित नाही",
       gettingLoc:"तुमचं स्थान घेत आहे…", locCaptured:"स्थान घेतलं",
@@ -559,6 +563,9 @@
     Array.prototype.forEach.call(el.querySelectorAll('[data-delete]'), function(b){
       b.onclick = function(){ deletePoint(b.getAttribute('data-delete')); };
     });
+    Array.prototype.forEach.call(el.querySelectorAll('.dirbtn'), function(b){
+      b.addEventListener('click', function(){ track('get_directions'); });
+    });
   });
 
   // ---------- list / view ----------
@@ -618,6 +625,7 @@
     if(el){ el.className = 'livechip '+d.liveState; el.textContent = t(d.liveState)+' · '+t('confirmedAgo')+' '+ago(d.liveAt); }
   }
   function reportStatus(locId, state){
+    track('report_status', { state: state });
     var d = byId(locId);
     if(d){ d.liveState = state; d.liveAt = Date.now(); }
     lastSelf = { locId:locId, state:state, ts:Date.now() };
@@ -629,18 +637,18 @@
   // ---------- moderation ----------
   function verifyPoint(locId){
     if(!sb) return;
-    sb.from('locations').update({ status:'verified' }).eq('id', locId).then(function(res){
-      if(res && !res.error){ var d=byId(locId); if(d){ d._user=false; } refresh(); toast(t('verifiedDone')); }
-      else { toast(t('loginFail')); }
-    }).catch(function(){ toast(t('loginFail')); });
+    sb.from('locations').update({ status:'verified' }).eq('id', locId).select().then(function(res){
+      if(res && !res.error && res.data && res.data.length){ var d=byId(locId); if(d){ d._user=false; } refresh(); toast(t('verifiedDone')); track('admin_verify'); }
+      else { toast(t('actionFail')); }
+    }).catch(function(){ toast(t('actionFail')); });
   }
   function deletePoint(locId){
     if(!sb) return;
     if(!window.confirm(t('confirmDel'))) return;
-    sb.from('locations').delete().eq('id', locId).then(function(res){
-      if(res && !res.error){ all = all.filter(function(x){ return x.id!==locId; }); refresh(); toast(t('deletedDone')); }
-      else { toast(t('loginFail')); }
-    }).catch(function(){ toast(t('loginFail')); });
+    sb.from('locations').delete().eq('id', locId).select().then(function(res){
+      if(res && !res.error && res.data && res.data.length){ all = all.filter(function(x){ return x.id!==locId; }); refresh(); toast(t('deletedDone')); track('admin_delete'); }
+      else { toast(t('actionFail')); }
+    }).catch(function(){ toast(t('actionFail')); });
   }
 
   // ---------- language ----------
@@ -689,6 +697,7 @@
   Array.prototype.forEach.call(document.querySelectorAll('.langtog button'), function(b){
     b.onclick = function(){
       lang = b.getAttribute('data-l');
+      track('language_change', { lang: lang });
       Array.prototype.forEach.call(document.querySelectorAll('.langtog button'), function(x){ x.classList.toggle('on', x===b); });
       applyLang();
       refresh();
@@ -738,6 +747,7 @@
       if(res && res.data && res.data.session){
         adminOverlay.classList.remove('show');
         document.getElementById('adm-pass').value = "";
+        track('admin_login');
         toast(t('adminOn'));
       } else { toast(t('loginFail')); }
     }).catch(function(){ toast(t('loginFail')); });
@@ -749,6 +759,7 @@
 
   // ---------- near me ----------
   document.getElementById('nearBtn').onclick = function(){
+    track('near_me_used');
     if(!navigator.geolocation){ toast(t('noSupport')); return; }
     toast(t('locating'));
     navigator.geolocation.getCurrentPosition(function(p){
@@ -824,6 +835,7 @@
       }).select().then(function(res){
         if (res && res.data && res.data[0]) {
           rec.id = res.data[0].id;
+          track('suggest_added');
           if (!all.some(function(d){ return d.id===rec.id; })) {
             all.push(rec); refresh(); map.flyTo([rec.lat,rec.lng], 15, {duration:.7});
           }
@@ -832,6 +844,7 @@
       }).catch(function(){ toast(t('locFail')); });
     } else {
       all.push(rec);
+      track('suggest_added');
       saveSuggestions(getSuggestionsOnly().map(function(d){
         return {name:d.name,area:d.area,type:d.type,accept:d.accept,lat:d.lat,lng:d.lng};
       }));
